@@ -39,8 +39,9 @@ That rule reads: on the **Tasks** tab, when column **D** equals "Done", move the
 | `equals:Done` | exactly "Done", ignoring case and extra spaces |
 | `contains:test` | any text containing "test" |
 | `older than:90` | a date more than 90 days ago |
+| `always` | every row (menu and nightly run only) |
 
-The action is either `delete` or `move:Tab name`. Click **Save** when you're done.
+The action is `delete`, `move:Tab name`, or `clear:B:F`, which empties columns B to F of the row but keeps the row, its formatting and its checkboxes. Click **Save** when you're done.
 
 ## Step 3: Run it
 
@@ -63,6 +64,10 @@ The first time you use the menu, approve Google's prompt ("Google hasn't verifie
 { tab: 'Stock', column: 'E', when: 'zero', action: 'delete' },
 // Archive log entries older than 90 days, nightly
 { tab: 'Log', column: 'A', when: 'older than:90', action: 'move:Archive' },
+// Reset a daily checklist every night: untick column B and clear notes in C
+{ tab: 'Checklist', column: 'A', when: 'always', action: 'clear:B:C' },
+// Tick a "Reset" checkbox in column F to clear that row's entries
+{ tab: 'Orders', column: 'F', when: 'checked', action: 'clear:B:F' },
 ```
 
 ## FAQ

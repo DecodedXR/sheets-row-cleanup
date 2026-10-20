@@ -29,4 +29,11 @@ assert.deepEqual(deleted, [[4, 1], [2, 1]]);
 // Deleting every data row under a frozen header first adds a spare row.
 let inserted = 0; const tiny = { ...sheet, getMaxRows: () => 3, insertRowsAfter: () => inserted++ };
 ctx.apply_(tiny, { action: 'delete' }, [2, 3]); assert.equal(inserted, 1);
+// clear action and the always condition
+assert.ok(m('always', ''));
+assert.deepEqual([...ctx.colRange_('B:F')], [2, 6]);
+const cleared = [];
+const clearSheet = { getRange: (r, c, h, w) => ({ clearContent: () => cleared.push([r, c, w]) }), deleteRows: () => { throw new Error('must not delete'); } };
+ctx.apply_(clearSheet, { action: 'clear:B:F' }, [3, 5]);
+assert.deepEqual(cleared, [[3, 2, 5], [5, 2, 5]]);
 console.log('ok');

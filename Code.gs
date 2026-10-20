@@ -10,7 +10,9 @@
  *   'blank'            the cell is empty          'zero'           the cell is 0
  *   'checked'          a checkbox is ticked       'equals:Done'    the cell is "Done" (any case)
  *   'contains:test'    the cell contains "test"   'older than:90'  a date more than 90 days ago
- * Actions (in `action`): 'delete', or 'move:Tab name' to move the row to the bottom of that tab.
+ *   'always'           every row (for a nightly reset; never runs on edit)
+ * Actions (in `action`): 'delete'; 'move:Tab name' to move the row to the bottom of that tab;
+ * or 'clear:B:F' to empty columns B to F of the row and keep the row (formatting and checkboxes stay).
  */
 
 const RULES = [
@@ -31,7 +33,7 @@ function onOpen() {
 
 function cleanupMenu() {
   const n = cleanup_();
-  SpreadsheetApp.getUi().alert(n.moved + ' row(s) moved, ' + n.deleted + ' row(s) deleted.');
+  SpreadsheetApp.getUi().alert(n.moved + ' row(s) moved, ' + n.deleted + ' row(s) deleted, ' + n.cleared + ' row(s) cleared.');
 }
 
 function runDaily() {
@@ -60,7 +62,7 @@ function onEdit(e) {
 
 function cleanup_() {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
-  const total = { moved: 0, deleted: 0 };
+  const total = { moved: 0, deleted: 0, cleared: 0 };
   RULES.forEach(rule => {
     const sheet = ss.getSheetByName(rule.tab);
     if (!sheet || sheet.getLastRow() <= HEADER_ROWS) return;
@@ -69,13 +71,18 @@ function cleanup_() {
     const rows = values.map((v, i) => matches_(rule.when, v[0], now) ? i + HEADER_ROWS + 1 : 0).filter(Boolean);
     if (!rows.length) return;
     apply_(sheet, rule, rows);
-    total[isMove_(rule) ? 'moved' : 'deleted'] += rows.length;
+    total[isMove_(rule) ? 'moved' : isClear_(rule) ? 'cleared' : 'deleted'] += rows.length;
   });
   return total;
 }
 
-/** Copy the rows to the target tab (if moving), then delete them, bottom-up in contiguous blocks. */
+/** Clear columns in place; or copy the rows to the target tab (if moving), then delete them, bottom-up in contiguous blocks. */
 function apply_(sheet, rule, rows) {
+  if (isClear_(rule)) {
+    const [a, b] = colRange_(rule.action.slice(6));
+    rows.forEach(r => sheet.getRange(r, a, 1, b - a + 1).clearContent());
+    return;
+  }
   if (isMove_(rule)) {
     const ss = sheet.getParent();
     const name = rule.action.slice(5).trim();
@@ -95,6 +102,13 @@ function apply_(sheet, rule, rows) {
 }
 
 function isMove_(rule) { return /^move:/i.test(rule.action); }
+function isClear_(rule) { return /^clear:/i.test(rule.action); }
+
+/** 'B:F' → [2, 6]; 'C' → [3, 3]. */
+function colRange_(spec) {
+  const [a, b] = String(spec).trim().split(':');
+  return [colNumber_(a), colNumber_(b || a)];
+}
 
 /** Does one cell value meet a condition like 'equals:Done' or 'older than:90'? */
 function matches_(when, value, now) {
@@ -105,6 +119,7 @@ function matches_(when, value, now) {
     case 'blank': return value === '' || value === null;
     case 'zero': return value === 0;
     case 'checked': return value === true;
+    case 'always': return true;
     case 'equals': return text === arg;
     case 'contains': return text.includes(arg);
     case 'older than': return Object.prototype.toString.call(value) === '[object Date]' && now - value > Number(arg) * 86400000;

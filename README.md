@@ -12,8 +12,8 @@ const RULES = [
 ];
 ```
 
-- **Conditions:** `blank`, `zero`, `checked` (a ticked checkbox), `equals:…`, `contains:…` (both ignore case), `older than:N` days
-- **Actions:** `delete`, or `move:Tab name` (the tab is created with your header row if it doesn't exist)
+- **Conditions:** `blank`, `zero`, `checked` (a ticked checkbox), `equals:…`, `contains:…` (both ignore case), `older than:N` days, `always`
+- **Actions:** `delete`, `move:Tab name` (the tab is created with your header row if it doesn't exist), or `clear:B:F` to empty those columns and keep the row, e.g. a nightly reset of a daily checklist
 - **Instant** for `equals`, `contains` and `checked` rules: the row moves as soon as someone sets the cell
 - **🧹 Cleanup → Run Cleanup Now**, or **Run Daily** to run every rule every night
 
