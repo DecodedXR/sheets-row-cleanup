@@ -1,0 +1,4 @@
+title: Free Row Cleanup for Google Sheets
+description: Automatically move or delete rows in Google Sheets based on a cell value. Free Apps Script.
+plugins:
+  - jekyll-sitemap
